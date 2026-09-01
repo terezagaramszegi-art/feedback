@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#050d08">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Zpětná vazba – Escape Library ČZU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:   #050d08;
+  --sur:  #0b1810;
+  --bor:  #1b3322;
+  --acc:  #4ade80;
+  --acc-d:#15803d;
+  --acc-g:rgba(74,222,128,0.12);
+  --txt:  #d1fae5;
+  --txt-m:#5e8c6e;
+  --txt-s:#a3c4b0;
+  --bad:  #f87171;
+  --wrn:  #fbbf24;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Space Mono',monospace;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.035) 0,rgba(0,0,0,.035) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+
+.wrap{max-width:480px;margin:0 auto;padding:1.5rem 1rem 3rem;}
+
+.header{text-align:center;margin-bottom:2rem;}
+.header .icon{font-size:2.5rem;margin-bottom:.6rem;}
+.header h1{font-size:1.2rem;font-weight:700;color:var(--acc);letter-spacing:.12em;margin-bottom:.35rem;}
+.header p{font-size:.75rem;color:var(--txt-m);line-height:1.65;}
+
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:12px;padding:1.1rem 1.2rem;margin-bottom:.85rem;}
+.q-num{font-size:.55rem;letter-spacing:.15em;color:var(--txt-m);margin-bottom:.4rem;display:block;}
+.q-main{font-size:.88rem;font-weight:700;color:var(--txt);margin-bottom:.9rem;line-height:1.55;}
+
+/* emoji buttons */
+.emoji-row{display:flex;gap:.4rem;justify-content:space-between;}
+.e-btn{flex:1;background:var(--bg);border:1px solid var(--bor);border-radius:8px;padding:.5rem .2rem;font-size:1.35rem;cursor:pointer;text-align:center;line-height:1;transition:border-color .15s,background .15s;}
+.e-btn:hover{border-color:var(--txt-m);}
+.e-btn.sel{border:2px solid var(--acc);background:var(--acc-g);}
+.e-sub{font-size:.6rem;color:var(--txt-m);display:block;margin-top:.2rem;font-family:'Space Mono',monospace;}
+
+/* pills */
+.pill-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.2rem;}
+.pill{background:var(--bg);border:1px solid var(--bor);border-radius:100px;padding:.3rem .75rem;font-size:.72rem;color:var(--txt-m);cursor:pointer;font-family:'Space Mono',monospace;transition:all .15s;}
+.pill:hover{border-color:var(--txt-m);color:var(--txt);}
+.pill.sel{border:2px solid var(--acc);color:var(--acc);background:var(--acc-g);}
+
+/* slider */
+.bar-labels{display:flex;justify-content:space-between;font-size:.6rem;color:var(--txt-m);margin-bottom:.5rem;}
+.bar-track{background:var(--bg);border:1px solid var(--bor);border-radius:100px;height:8px;position:relative;cursor:pointer;}
+.bar-fill{background:var(--acc);border-radius:100px;height:8px;transition:width .1s;box-shadow:0 0 6px rgba(74,222,128,.3);}
+.bar-thumb{position:absolute;top:-5px;width:18px;height:18px;border-radius:50%;background:var(--acc);border:2px solid var(--bg);transform:translateX(-50%);transition:left .1s;pointer-events:none;}
+.bar-val{text-align:center;font-size:.78rem;color:var(--acc);font-weight:700;margin-top:.55rem;}
+
+/* textarea */
+.field{background:var(--bg);border:1px solid var(--bor);border-radius:8px;color:var(--acc);font-family:'Space Mono',monospace;font-size:.82rem;padding:.75rem .9rem;width:100%;outline:none;caret-color:var(--acc);resize:none;min-height:100px;line-height:1.65;margin-top:.2rem;transition:border-color .2s;}
+.field:focus{border-color:var(--acc-d);}
+.field::placeholder{color:var(--txt-m);opacity:.45;font-size:.75rem;}
+.char-count{font-size:.6rem;color:var(--txt-m);text-align:right;margin-top:.3rem;}
+
+/* submit */
+.submit-btn{display:block;width:100%;padding:.85rem 1rem;background:var(--acc);color:#052e16;border:none;border-radius:8px;font-family:'Space Mono',monospace;font-size:.82rem;font-weight:700;letter-spacing:.07em;cursor:pointer;transition:opacity .15s,transform .1s;margin-top:.5rem;}
+.submit-btn:hover{opacity:.88;}
+.submit-btn:active{transform:scale(.98);}
+.submit-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;}
+
+/* success */
+#success{display:none;text-align:center;padding:3rem 1rem;}
+#success .big{font-size:3.5rem;margin-bottom:.75rem;}
+#success h2{font-size:1.2rem;font-weight:700;color:var(--acc);margin-bottom:.6rem;letter-spacing:.08em;}
+#success p{font-size:.8rem;color:var(--txt-s);line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header" id="form-header">
+    <div class="icon">🌿</div>
+    <h1>ZPĚTNÁ VAZBA</h1>
+    <p>Escape Library – Knihovna ČZU<br>Tvůj názor nás fakt zajímá. Zabere to 2 minuty.</p>
+  </div>
+
+  <!-- Q1 -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 1 Z 7</span>
+    <p class="q-main">Jak moc tě hra bavila?</p>
+    <div class="emoji-row" id="q1">
+      <button class="e-btn" data-val="1" onclick="pick('q1',this)">😴<span class="e-sub">nuda</span></button>
+      <button class="e-btn" data-val="2" onclick="pick('q1',this)">😐<span class="e-sub">ujde</span></button>
+      <button class="e-btn" data-val="3" onclick="pick('q1',this)">🙂<span class="e-sub">ok</span></button>
+      <button class="e-btn" data-val="4" onclick="pick('q1',this)">😄<span class="e-sub">super</span></button>
+      <button class="e-btn" data-val="5" onclick="pick('q1',this)">🤩<span class="e-sub">bomba!</span></button>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 2 Z 7</span>
+    <p class="q-main">Jak těžká byla hra?</p>
+    <div class="emoji-row" id="q2">
+      <button class="e-btn" data-val="1" onclick="pick('q2',this)">🍼<span class="e-sub">dětsky</span></button>
+      <button class="e-btn" data-val="2" onclick="pick('q2',this)">😌<span class="e-sub">lehká</span></button>
+      <button class="e-btn" data-val="3" onclick="pick('q2',this)">⚖️<span class="e-sub">akorát</span></button>
+      <button class="e-btn" data-val="4" onclick="pick('q2',this)">😤<span class="e-sub">těžká</span></button>
+      <button class="e-btn" data-val="5" onclick="pick('q2',this)">💀<span class="e-sub">brutál</span></button>
+    </div>
+  </div>
+
+  <!-- Q3 design -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 3 Z 7</span>
+    <p class="q-main">Jak hodnotíš design aplikace?</p>
+    <div class="emoji-row" id="q3">
+      <button class="e-btn" data-val="1" onclick="pick('q3',this)">🤮<span class="e-sub">ošklivý</span></button>
+      <button class="e-btn" data-val="2" onclick="pick('q3',this)">😕<span class="e-sub">slabé</span></button>
+      <button class="e-btn" data-val="3" onclick="pick('q3',this)">😶<span class="e-sub">průměr</span></button>
+      <button class="e-btn" data-val="4" onclick="pick('q3',this)">😎<span class="e-sub">pěkný</span></button>
+      <button class="e-btn" data-val="5" onclick="pick('q3',this)">🔥<span class="e-sub">fire!</span></button>
+    </div>
+    <div class="pill-row" style="margin-top:.85rem;" id="q3b">
+      <button class="pill" onclick="toggle(this)">přehledný ✅</button>
+      <button class="pill" onclick="toggle(this)">nepřehledný ❌</button>
+      <button class="pill" onclick="toggle(this)">moderní ✨</button>
+      <button class="pill" onclick="toggle(this)">zastaralý 👴</button>
+      <button class="pill" onclick="toggle(this)">příjemné barvy 🎨</button>
+      <button class="pill" onclick="toggle(this)">špatné barvy 😬</button>
+      <button class="pill" onclick="toggle(this)">dobře čitelný 👓</button>
+      <button class="pill" onclick="toggle(this)">špatně čitelný 🔍</button>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 4 Z 7</span>
+    <p class="q-main">Co by sis přál/a přidat nebo změnit?</p>
+    <div class="pill-row" id="q4">
+      <button class="pill" onclick="toggle(this)">více šifer 🔐</button>
+      <button class="pill" onclick="toggle(this)">víc příběhu 📖</button>
+      <button class="pill" onclick="toggle(this)">lepší nápovědy 💡</button>
+      <button class="pill" onclick="toggle(this)">kratší hru ⏩</button>
+      <button class="pill" onclick="toggle(this)">delší hru ⏳</button>
+      <button class="pill" onclick="toggle(this)">týmové úkoly 👥</button>
+      <button class="pill" onclick="toggle(this)">jiné prostory 🏛️</button>
+      <button class="pill" onclick="toggle(this)">nechám jak je ✌️</button>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 5 Z 7</span>
+    <p class="q-main">Díky hře teď vím, jak…</p>
+    <div class="pill-row" id="q5">
+      <button class="pill" onclick="toggle(this)">půjčit knihu 📚</button>
+      <button class="pill" onclick="toggle(this)">najít článek online 🔎</button>
+      <button class="pill" onclick="toggle(this)">využít konzultaci 🙋</button>
+      <button class="pill" onclick="toggle(this)">orientovat se v knihovně 🗺️</button>
+      <button class="pill" onclick="toggle(this)">co je Open Science 🌍</button>
+      <button class="pill" onclick="toggle(this)">pořád nic nového 😅</button>
+    </div>
+  </div>
+
+  <!-- Q6 slider -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 6 Z 7</span>
+    <p class="q-main">Doporučil/a bys hru kamarádům?</p>
+    <div class="bar-labels"><span>Ani náhodou</span><span>Určitě ano!</span></div>
+    <div class="bar-track" id="bar-track" onclick="setBar(event)">
+      <div class="bar-fill" id="bar-fill" style="width:50%;"></div>
+      <div class="bar-thumb" id="bar-thumb" style="left:50%;"></div>
+    </div>
+    <p class="bar-val" id="bar-val">5 / 10</p>
+  </div>
+
+  <!-- Q7 text -->
+  <div class="card">
+    <span class="q-num">OTÁZKA 7 Z 7</span>
+    <p class="q-main">Máš pro nás vzkaz? Klidně napiš cokoliv. 👇</p>
+    <textarea class="field" id="q7" placeholder="Pochvala, kritika, vtip, nápad... Bereme všechno." maxlength="400"></textarea>
+    <p class="char-count" id="char-count">0 / 400</p>
+  </div>
+
+  <button class="submit-btn" onclick="submitForm()">ODESLAT ZPĚTNOU VAZBU →</button>
+
+</div>
+
+<!-- SUCCESS -->
+<div id="success">
+  <div class="big">🎉</div>
+  <h2>DÍKY MOC!</h2>
+  <p>Tvůj názor nám pomůže hru vylepšit.<br>Vážíme si každé odpovědi –<br>i té trochu drsné. 😄</p>
+</div>
+
+<script>
+const A={q1:null,q2:null,q3:null,q3b:[],q4:[],q5:[],q6:5,q7:''};
+
+function pick(g,btn){
+  document.querySelectorAll('#'+g+' .e-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  A[g]=btn.dataset.val;
+}
+
+function toggle(btn){
+  btn.classList.toggle('sel');
+}
+
+function setBar(e){
+  const rect=document.getElementById('bar-track').getBoundingClientRect();
+  const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+  const val=Math.max(1,Math.round(pct*10));
+  document.getElementById('bar-fill').style.width=(pct*100)+'%';
+  document.getElementById('bar-thumb').style.left=(pct*100)+'%';
+  document.getElementById('bar-val').textContent=val+' / 10';
+  A.q6=val;
+}
+
+document.getElementById('q7').addEventListener('input',function(){
+  document.getElementById('char-count').textContent=this.value.length+' / 400';
+  A.q7=this.value;
+});
+
+function submitForm(){
+  const btn=document.querySelector('.submit-btn');
+  btn.disabled=true;
+  btn.textContent='Odesílám...';
+  setTimeout(()=>{
+    document.querySelector('.wrap').style.display='none';
+    document.getElementById('success').style.display='block';
+  },800);
+}
+</script>
+</body>
+</html>
